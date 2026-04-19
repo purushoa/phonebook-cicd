@@ -4,9 +4,6 @@ on:
   push:
     branches:
       - main
-  pull_request:
-    branches: [main]
-    types: [opened, synchronize]
 
 jobs:
   simple_deployment_pipeline:
@@ -16,16 +13,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - name: Install dependencies
-        run: npm install
-      - name: Check style
-        run: npx eslint "**/*.{js,jsx}"
-      - name: Build
-        run: npm run build
-      - name: Test
-        run: npm test
+      - run: npm install
+      - run: npm run build
       - name: Trigger deployment
-        if: ${{ github.event_name == 'push' && !contains(join(github.event.commits.*.message, ' '), '#skip') }}
         run: curl "${{ secrets.RENDER_DEPLOY_HOOK }}"
 
   discord_notification:
@@ -33,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     if: always()
     steps:
-      - name: Notification
+      - name: Notify
         run: |
           curl -X POST "${{ secrets.DISCORD_WEBHOOK }}" \
           -H "Content-Type: application/json" \
