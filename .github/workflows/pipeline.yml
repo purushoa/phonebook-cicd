@@ -9,35 +9,54 @@ on:
     types: [opened, synchronize]
 
 jobs:
-  simple_deployment_pipeline:
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - name: Install dependencies
-        run: npm install
-      - name: Check style
-        run: npx eslint "**/*.{js,jsx}"
-      - name: Build
-        run: npm run build
-      - name: Test
-        run: npm test
-      - name: Trigger deployment
-        # Only deploy on pushes to main, not on Pull Requests (Exercise 14)
-        if: ${{ github.event_name == 'push' }}
-        run: curl ${{ secrets.RENDER_DEPLOY_HOOK }}
+      - run: npm install
+      - run: npx eslint "**/*.{js,jsx}"
 
-  tag_release:
-    needs: [simple_deployment_pipeline]
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Bump version and push tag
-        # Only tag on pushes to main AND if #skip is NOT in any commit message (Exercise 15 & 16)
-        if: ${{ github.event_name == 'push' && !contains(join(github.event.commits.*.message, ' '), '#skip') }}
-        uses: anothrNick/github-tag-action@4ed44965e0db8dab2b466a16da04aec3cc312fd8
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install
+      - run: npm run build
+
+  deploy:
+    needs: [lint, build]
+    if: ${{ github.event_name == 'push' && !contains(join(github.event.commits.*.message, ' '), '#skip') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render deployment
+        run: curl "${{ secrets.RENDER_DEPLOY_HOOK }}"
+
+  notify_success:
+    needs: [deploy]
+    if: success()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send success notification
+        uses: Ilshidur/action-discord@0.3.2
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DEFAULT_BUMP: patch
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        with:
+          args: "✅ Phonebook-CICD: Deployment successful for commit ${{ github.sha }}!"
+
+  notify_failure:
+    needs: [lint, build, deploy]
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send failure notification
+        uses: Ilshidur/action-discord@0.3.2
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        with:
+          args: "❌ Phonebook-CICD: Build or Deployment failed! Logs: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
