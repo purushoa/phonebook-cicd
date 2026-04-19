@@ -38,7 +38,7 @@ jobs:
         run: curl "${{ secrets.RENDER_DEPLOY_HOOK }}"
 
   notify_success:
-    needs: [deploy]
+    needs: [ deploy ]
     if: success()
     runs-on: ubuntu-latest
     steps:
@@ -47,7 +47,7 @@ jobs:
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         with:
-          args: "✅ Phonebook-CICD: Deployment successful for commit ${{ github.sha }}!"
+          args: "Hello Discord! Phonebook deployment worked!"
 
   notify_failure:
     needs: [lint, build, deploy]
