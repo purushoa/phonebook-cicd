@@ -1,0 +1,16 @@
+name: Periodic Health Check
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Runs once a day. Adjust as needed.
+
+jobs:
+  periodic_health_check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check the deployed service URL
+        uses: jcmrob/url-health-check@v1
+        with:
+          url: YOUR_POKEDEX_RENDER_URL_HERE
+          max-attempts: 3
+          retry-delay: 5s
