@@ -48,7 +48,7 @@ jobs:
         with:
           severity: info
           details: "Deployment Successful! Pokedex is live."
-          webhookUrl: ${{ secrets.DISCORD_WEBHOOK }}
+          webhookUrl: ${{ secrets.MY_NEW_WEBHOOK }}
   notify_failure:
     needs: [lint, build, deploy]
     # Runs if any of the required jobs above fail
