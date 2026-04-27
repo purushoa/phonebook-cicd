@@ -31,6 +31,7 @@ jobs:
 
   deploy:
     needs: [lint, build]
+    # Deployment only happens on push to main, NOT on PRs, and not if #skip is in the message
     if: ${{ github.event_name == 'push' && !contains(join(github.event.commits.*.message, ' '), '#skip') }}
     runs-on: ubuntu-latest
     steps:
