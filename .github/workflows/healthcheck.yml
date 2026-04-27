@@ -13,4 +13,3 @@ jobs:
         uses: jrasanen/check-endpoint@v1.0.0
         with:
           url: https://purushoa-pokedex.onrender.com
-          timeout: 10000
