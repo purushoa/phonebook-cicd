@@ -31,6 +31,7 @@ jobs:
 
   deploy:
     needs: [lint, build]
+    # This ensures deployment only happens on push to main, NOT on PRs, and not if #skip is used
     if: ${{ github.event_name == 'push' && !contains(join(github.event.commits.*.message, ' '), '#skip') }}
     runs-on: ubuntu-latest
     steps:
@@ -38,25 +39,27 @@ jobs:
         run: curl "${{ secrets.RENDER_DEPLOY_HOOK }}"
 
   notify_success:
-    needs: [ deploy ]
+    needs: [deploy]
+    # Only runs if the deployment was successful
     if: success()
     runs-on: ubuntu-latest
     steps:
       - name: Send success notification
-        uses: Ilshidur/action-discord@0.3.2
-        env:
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        uses: rjstone/discord-webhook-notify@v1
         with:
-          args: "Hello Discord! Phonebook deployment worked!"
+          severity: info
+          details: "Deployment Successful! The latest version of Phonebook is now live."
+          webhookUrl: ${{ secrets.DISCORD_WEBHOOK }}
 
   notify_failure:
     needs: [lint, build, deploy]
+    # Runs if any of the required jobs above fail
     if: failure()
     runs-on: ubuntu-latest
     steps:
       - name: Send failure notification
-        uses: Ilshidur/action-discord@0.3.2
-        env:
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        uses: rjstone/discord-webhook-notify@v1
         with:
-          args: "❌ Phonebook-CICD: Build or Deployment failed! Logs: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          severity: error
+          details: "❌ Build or Deployment failed! Check the logs here: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          webhookUrl: ${{ secrets.DISCORD_WEBHOOK }}
