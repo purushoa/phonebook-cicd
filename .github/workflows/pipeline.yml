@@ -51,8 +51,8 @@ jobs:
       - name: Build and Run E2E
         run: |
           npm run build
-          npm run start-prod &
-          npx wait-on http://localhost:8080
+          npm run start-prod & # The '&' is CRITICAL to run in background
+          npx wait-on http://localhost:8080 --timeout 60000
           npm run test:e2e
 
   deploy:
