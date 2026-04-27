@@ -31,7 +31,7 @@ jobs:
 
   deploy:
     needs: [lint, build]
-    # This ensures deployment only happens on push to main, NOT on PRs, and not if #skip is used
+    # Deployment only happens on push to main, NOT on PRs, and not if #skip is in the message
     if: ${{ github.event_name == 'push' && !contains(join(github.event.commits.*.message, ' '), '#skip') }}
     runs-on: ubuntu-latest
     steps:
@@ -39,25 +39,25 @@ jobs:
         run: curl "${{ secrets.RENDER_DEPLOY_HOOK }}"
 
   notify_success:
-    needs: [ deploy ]
+    needs: [deploy]
     if: success()
     runs-on: ubuntu-latest
     steps:
-      - name: Test Discord Webhook
+      - name: Discord notification success
         uses: rjstone/discord-webhook-notify@v1
         with:
           severity: info
           details: "Deployment Successful! Pokedex is live."
           webhookUrl: ${{ secrets.FINAL_DISCORD_WEBHOOK }}
+
   notify_failure:
     needs: [lint, build, deploy]
-    # Runs if any of the required jobs above fail
     if: failure()
     runs-on: ubuntu-latest
     steps:
-      - name: Send failure notification
+      - name: Discord notification failure
         uses: rjstone/discord-webhook-notify@v1
         with:
           severity: error
           details: "❌ Build or Deployment failed! Check the logs here: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          webhookUrl: ${{ secrets.DISCORD_WEBHOOK }}
+          webhookUrl: ${{ secrets.FINAL_DISCORD_WEBHOOK }}
