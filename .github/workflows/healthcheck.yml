@@ -3,15 +3,14 @@ name: Periodic Health Check
 on:
   schedule:
     - cron: '0 0 * * *'
-  workflow_dispatch: # <--- Add this exact line!
+  workflow_dispatch:
 
 jobs:
   periodic_health_check:
     runs-on: ubuntu-latest
     steps:
       - name: Check the deployed service URL
-        uses: jcmrob/url-health-check@v1
+        uses: jrasanen/check-endpoint@v1.0.0
         with:
           url: https://purushoa-pokedex.onrender.com
-          max-attempts: 3
-          retry-delay: 5s
+          timeout: 10000
