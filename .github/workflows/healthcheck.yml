@@ -11,6 +11,6 @@ jobs:
       - name: Check the deployed service URL
         uses: jcmrob/url-health-check@v1
         with:
-          url: YOUR_POKEDEX_RENDER_URL_HERE
+          url: https://purushoa-pokedex.onrender.com
           max-attempts: 3
           retry-delay: 5s
