@@ -47,9 +47,8 @@ jobs:
         uses: rjstone/discord-webhook-notify@v1
         with:
           severity: info
-          details: "Deployment Successful! Phonebook is live."
+          details: "Deployment Successful! Pokedex is live."
           webhookUrl: ${{ secrets.DISCORD_WEBHOOK }}
-
   notify_failure:
     needs: [lint, build, deploy]
     # Runs if any of the required jobs above fail
