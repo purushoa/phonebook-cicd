@@ -16,8 +16,22 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - run: npm install
-      - run: npx eslint "**/*.{js,jsx}"
+      - name: Install dependencies
+        run: npm install
+      - name: Check style
+        run: npm run eslint
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        run: npm install
+      - name: Run npm test
+        run: npm test
 
   build:
     runs-on: ubuntu-latest
@@ -26,38 +40,77 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - run: npm install
-      - run: npm run build
+      - name: Install dependencies
+        run: npm install
+      - name: Run npm build
+        run: npm run build
+
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        run: npm install
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+      - name: Run e2e tests
+        run: npm run test:e2e
 
   deploy:
-    needs: [lint, build]
-    # Deployment only happens on push to main, NOT on PRs, and not if #skip is in the message
+    needs: [lint, test, build, e2e]
     if: ${{ github.event_name == 'push' && !contains(join(github.event.commits.*.message, ' '), '#skip') }}
     runs-on: ubuntu-latest
     steps:
       - name: Trigger Render deployment
         run: curl "${{ secrets.RENDER_DEPLOY_HOOK }}"
 
+  tag_release:
+    needs: [lint, test, build, e2e]
+    if: ${{ github.event_name == 'push' && !contains(join(github.event.commits.*.message, ' '), '#skip') && success() }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Bump version and push tag
+        uses: anothrNick/github-tag-action@1.64.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEFAULT_BUMP: patch
+
   notify_success:
-    needs: [deploy]
-    if: success()
+    needs: [deploy, tag_release]
+    if: ${{ success() }}
     runs-on: ubuntu-latest
     steps:
-      - name: Discord notification success
-        uses: rjstone/discord-webhook-notify@v1
+      - name: Send success notification
+        uses: Ilshidur/action-discord@0.3.2
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.FINAL_DISCORD_WEBHOOK }}
         with:
-          severity: info
-          details: "Deployment Successful! Pokedex is live."
-          webhookUrl: ${{ secrets.FINAL_DISCORD_WEBHOOK }}
+          args: |
+            ✅ Deployment successful!
+            Repository: ${{ github.repository }}
+            Commit: ${{ github.sha }}
+            Workflow: ${{ github.workflow }}
 
   notify_failure:
-    needs: [lint, build, deploy]
-    if: failure()
+    needs: [lint, test, build, e2e, deploy, tag_release]
+    if: ${{ failure() }}
     runs-on: ubuntu-latest
     steps:
-      - name: Discord notification failure
-        uses: rjstone/discord-webhook-notify@v1
+      - name: Send failure notification
+        uses: Ilshidur/action-discord@0.3.2
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.FINAL_DISCORD_WEBHOOK }}
         with:
-          severity: error
-          details: "❌ Build or Deployment failed! Check the logs here: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          webhookUrl: ${{ secrets.FINAL_DISCORD_WEBHOOK }}
+          args: |
+            ❌ Build failed!
+            Repository: ${{ github.repository }}
+            Commit: ${{ github.sha }}
+            Workflow: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
