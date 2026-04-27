@@ -39,16 +39,15 @@ jobs:
         run: curl "${{ secrets.RENDER_DEPLOY_HOOK }}"
 
   notify_success:
-    needs: [deploy]
-    # Only runs if the deployment was successful
+    needs: [ deploy ]
     if: success()
     runs-on: ubuntu-latest
     steps:
-      - name: Send success notification
+      - name: Test Discord Webhook
         uses: rjstone/discord-webhook-notify@v1
         with:
           severity: info
-          details: "Deployment Successful! The latest version of Phonebook is now live."
+          details: "Deployment Successful! Phonebook is live."
           webhookUrl: ${{ secrets.DISCORD_WEBHOOK }}
 
   notify_failure:
