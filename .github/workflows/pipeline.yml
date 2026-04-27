@@ -97,7 +97,7 @@ jobs:
             ✅ Deployment successful!
             Repository: ${{ github.repository }}
             Commit: ${{ github.sha }}
-            Workflow: ${{ github.workflow }}
+            Message: ${{ github.event.head_commit.message }}
 
   notify_failure:
     needs: [lint, test, build, e2e, deploy, tag_release]
@@ -113,4 +113,5 @@ jobs:
             ❌ Build failed!
             Repository: ${{ github.repository }}
             Commit: ${{ github.sha }}
-            Workflow: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            Message: ${{ github.event.head_commit.message }}
+            Logs: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
