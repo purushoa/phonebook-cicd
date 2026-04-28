@@ -2,16 +2,16 @@ name: Periodic Health Check
 
 on:
   schedule:
-    # Runs at 00:00 every day
     - cron: '0 0 * * *'
-  workflow_dispatch: # This button allows you to run it manually!
+  workflow_dispatch:
 
 jobs:
   periodic_health_check:
     runs-on: ubuntu-latest
     steps:
       - name: Check the deployed service URL
-        uses: jrasanen/check-endpoint@v1.0.0
+        uses: jasonetco/url-health-check@v1
         with:
           url: https://purushoa-pokedex.onrender.com/health
-          timeout: 20000
+          max-attempts: 3
+          retry-delay: 5s
