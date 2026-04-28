@@ -12,7 +12,6 @@ jobs:
       - name: Check the deployed service URL
         uses: jasonetco/url-health-check@v1
         with:
-          # This should point to the /health route you added in app.js
           url: https://purushoa-pokedex.onrender.com/health
           max-attempts: 3
           retry-delay: 5s
