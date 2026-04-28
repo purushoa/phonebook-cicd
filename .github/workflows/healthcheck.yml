@@ -2,8 +2,8 @@ name: Periodic Health Check
 
 on:
   schedule:
-    - cron: '0 0 * * *'
-  workflow_dispatch:
+    - cron: '0 0 * * *' # Runs daily
+  workflow_dispatch:   # Allows you to click the 'Run' button manually
 
 jobs:
   periodic_health_check:
@@ -12,6 +12,7 @@ jobs:
       - name: Check the deployed service URL
         uses: jasonetco/url-health-check@v1
         with:
+          # This should point to the /health route you added in app.js
           url: https://purushoa-pokedex.onrender.com/health
           max-attempts: 3
           retry-delay: 5s
